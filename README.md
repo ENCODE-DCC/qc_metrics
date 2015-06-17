@@ -13,7 +13,7 @@ Step 2: Install or update dependencies::
 
 Step 3: Setup dx-tools and configure::
   
-    Follow the tutorial here - https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK
+    Follow the tutorial [here](https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK)
     
 Step 3: Checkout the repo::
 
