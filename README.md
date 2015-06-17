@@ -20,6 +20,18 @@ Step 3: Checkout the repo::
     $ git clone --recursive https://github.com/nikhilRP/data_provenance.git
 
 Step 4: Fill out authorization details in "auth.json"
+    
+    {
+      "dnanexus": {
+        "project": "",
+        "data_dir": ""
+      },
+      "encoded": {
+        "SERVER": "",
+        "AUTHID": "",
+        "AUTHPW": ""
+      }
+    }
 
 Step 5: Fill out "properties.json" and mention the properties to be retrieved from DNA NEXUS
 
