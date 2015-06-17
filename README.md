@@ -13,7 +13,7 @@ Step 2: Install or update dependencies::
 
 Step 3: Setup dx-tools and configure::
   
-    Follow the tutorial [here](https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK)
+    Follow the tutorial here - https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK
     
 Step 3: Checkout the repo::
 
@@ -22,3 +22,7 @@ Step 3: Checkout the repo::
 Step 4: Fill out authorization details in "auth.json"
 
 Step 5: Fill out "properties.json" and mention the properties to be retrieved from DNA NEXUS
+
+TODO::
+
+    Add sample "properties.json" file
