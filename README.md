@@ -19,7 +19,7 @@ Step 3: Checkout the repo::
 
     $ git clone --recursive https://github.com/nikhilRP/data_provenance.git
 
-Step 4: Fill out authorization details in "auth.json"
+Step 4: Fill out authorization details in "auth.json"::
     
     {
       "dnanexus": {
