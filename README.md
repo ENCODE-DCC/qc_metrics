@@ -29,7 +29,8 @@ Step 4: Fill out authorization details in "auth.json"
       "encoded": {
         "server": "",
         "authid": "",
-        "authpw": ""
+        "authpw": "",
+        "pipeline": ""
       }
     }
 
