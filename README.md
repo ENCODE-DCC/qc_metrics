@@ -27,9 +27,9 @@ Step 4: Fill out authorization details in "auth.json"
         "data_dir": ""
       },
       "encoded": {
-        "SERVER": "",
-        "AUTHID": "",
-        "AUTHPW": ""
+        "server": "",
+        "authid": "",
+        "authpw": ""
       }
     }
 
