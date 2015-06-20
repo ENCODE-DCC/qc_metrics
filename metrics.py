@@ -10,18 +10,20 @@ from dxpy.bindings import (
 )
 
 EPILOG = __doc__
-HEADERS = {'content-type': 'application/json'}
-_PARAMS = {
-    'format': ['json'],
-    'limit': ['all'],
-    'field': ['accession', 'original_files']
-}
 
 
 def patch_file(props):
     """
     Patches the file with QC metrics and analysis step run details
     """
+    pass
+
+
+def check_workflow_run():
+    pass
+
+
+def post_workflow_run():
     pass
 
 
@@ -45,14 +47,21 @@ def check_step_run(alias):
         return None
 
 
-def post_step_run(props):
+def post_step_run(job, workflow_run):
     """
     Post the step run to the specificed encode server
     """
-    pass
+    analysis = dxanalysis.DXAnalysis(job.analysis)
+    analysis_step_run = {
+        'analysis_step': '',
+        'workflow_run': workflow_run,
+        'dx_applet_details': {},
+        'status': 'finished' if job.state == 'done' else job.state
+    }
+    #import pdb; pdb.set_trace()
 
 
-def load_dx_metadata(props, pipeline):
+def load_dx_metadata(props):
     """
     Takes file properties and parses out dx metadata from notes field
     returns updated file props with analysis step run and pipeline
@@ -63,10 +72,16 @@ def load_dx_metadata(props, pipeline):
     job = dxjob.DXJob(notes_json['dx-createdBy']['job'])
     file = dxfile.DXFile(notes_json['dx-id'])
     props['aliases'].append('dnanexus:%s' % file.id)
+
+    # if there is no step run post it
+    workflow_run = check_workflow_run()
+    if workflow_run is None:
+        workflow_run = post_workflow_run
+
+    # if there is no step run post it
     step_run = check_step_run(job.id)
     if step_run is None:
-        # if there is no step run post it
-        step_run = post_step_run()
+        step_run = post_step_run(job, workflow_run)
     props['step_run'] = step_run
     patch_file(props)
 
@@ -84,7 +99,12 @@ def get_assay_JSON(url):
     """
     Searches and returns one experiment at a time
     """
-    path = '%s&%s' % (url, urlencode(_PARAMS, True))
+    params = {
+        'format': ['json'],
+        'limit': ['all'],
+        'field': ['accession', 'original_files']
+    }
+    path = '%s&%s' % (url, urlencode(params, True))
     response = requests.get(path, auth=(AUTHID, AUTHPW), verify=False)
     for exp in response.json()['@graph']:
         yield exp
@@ -105,19 +125,16 @@ def main():
 
     args = parser.parse_args()
 
-    # Load details from JSON doc
-    # TODO: should eliminate globals, terrible programming.
-    data = json.load(open('auth.json'))
-    global AUTHID, AUTHPW, ENCODE_SERVER
-    AUTHID = data['encoded']['authid']
-    AUTHPW = data['encoded']['authpw']
-    ENCODE_SERVER = data['encoded']['server']
-
     # disable warning for requests should avoid them in first place
     requests.packages.urllib3.disable_warnings()
 
-    # Check and load pipeline object from the server
-    pipeline = get_encode_object(data['encoded']['pipeline'])
+    # TODO: should eliminate globals, terrible programming.
+    data = json.load(open('auth.json'))
+    global AUTHID, AUTHPW, ENCODE_SERVER, PIPELINE
+    AUTHID = data['encoded']['authid']
+    AUTHPW = data['encoded']['authpw']
+    ENCODE_SERVER = data['encoded']['server']
+    PIPELINE = get_encode_object(data['encoded']['pipeline'])
 
     try:
         dxproject = dxpy.DXProject(data['dnanexus']['project'])
@@ -137,7 +154,7 @@ def main():
                 for f in exp['original_files']:
                     f_json = get_encode_object(f)
                     if 'notes' in f_json:
-                        load_dx_metadata(f_json, pipeline)
+                        load_dx_metadata(f_json)
         elif args.dx_file:
             pass
 
