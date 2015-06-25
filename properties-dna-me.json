@@ -1,0 +1,26 @@
+{
+    "encode_server": "",
+    "encode_authid": "",
+    "encode_authpw": "",
+    "pipeline": "",
+    "dx_project": "project-BKf7zV80z53QbqKQz18005vZ",
+    "analysis_steps": {
+        "/analysis-steps/index-bismark-v-1-0/": {
+            "dx_stage-name": "WGBS-mott-read-trimmer-se"
+        },
+        "/analysis-steps/mott-trim-align-bismark-v-1-0/": {
+            "dx_stage_name": "WGBS-bismark-map-se"
+        },
+        "/analysis-steps/methylation-quantification-bismark-v-1-0/": {
+            "dx_stage_name": "WGBS-extract-report",
+            "metrics": {
+                  "encode_schema": "bismark_qc_metric.json",
+                  "type": "parse_schema",
+                  "file_extensions": "*fq_bismark_map_report.txt"
+            }
+        },
+        "/analysis-steps/bigbed-conversion-v-2-6/": {
+            "dx_stage_name": "WGBS-extract-report"
+        }
+    }
+}
