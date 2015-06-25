@@ -25,9 +25,6 @@ def post_encode_object(collection, props):
         headers=HEADERS)
     if response.status_code == 201:
         return response.json()['@graph'][0]['@id']
-    elif response.status_code == 422:
-        # This should be handled better
-        return id
     else:
         return None
 
@@ -43,9 +40,6 @@ def patch_encode_object(collection, props, id):
         headers=HEADERS)
     if response.status_code == 200:
         return response.json()['@graph'][0]['@id']
-    elif response.status_code == 422:
-        # This should be handled better
-        return id
     else:
         return None
 
@@ -75,11 +69,19 @@ def post_workflow_run(analysis):
         return workflow_run
 
 
-def post_step_run(job, workflow_run, analysis_step):
+def post_step_run(job, workflow_run, analysis_step, virtual=False):
     """
     Post the step run to the specificed encode server
     """
-    path = '%s/dnanexus:%s' % (data['encode_server'], job.id)
+    # Another dirty hack for quantification pipeline
+    if virtual:
+        if analysis_step == '/analysis-steps/mott-trim-align-bismark-v-1-0/':
+            alias = '%s-mapping' % job.id
+        else:
+            alias = '%s-file-conversion' % job.id
+    else:
+        alias = job.id
+    path = '%s/dnanexus:%s' % (data['encode_server'], alias)
     response = requests.get(path, auth=(data['encode_authid'],
                                         data['encode_authpw']))
     if response.status_code == 200:
@@ -89,7 +91,7 @@ def post_step_run(job, workflow_run, analysis_step):
         step_run = {
             'analysis_step': analysis_step,
             'workflow_run': workflow_run,
-            'aliases': ['dnanexus:%s' % job.id],
+            'aliases': ['dnanexus:%s' % alias],
             'dx_applet_details': [{
                 'dx_job_id': job.id,
                 'dx_app_json': applet.describe(),
@@ -103,7 +105,7 @@ def post_step_run(job, workflow_run, analysis_step):
                 ),
                 'dx_status': 'finished' if applet.state == 'closed' else applet.state
             }],
-            'status': 'finished' if job.state == 'done' else job.state
+            'status': 'virtual' if virtual else 'finished'
         }
         step_run_id = post_encode_object('analysis_step_run', step_run)
         return step_run_id
@@ -119,8 +121,7 @@ def get_analysis_step(props):
     elif props['file_format'] == "bam":
         analysis_step = "/analysis-steps/mott-trim-align-bismark-v-1-0/"
     elif props['file_format'] == "bed":
-        analysis_step = \
-            "/analysis-steps/methylation-quantification-bismark-v-1-0/"
+        analysis_step = "/analysis-steps/methylation-quantification-bismark-v-1-0/"
     return analysis_step
 
 
@@ -158,7 +159,7 @@ def post_qc_metrics(ana_step, step_run, exp_details, folder):
             else:
                 file_contents = file_json.read().split('\n')
 
-        # Debug statements to know which files are posted and which aren't
+        # Debug statements to know which files doesn't have qc metrics
         if len(file_contents) == 0:
             print "Couldn't load map report for the file - %s" % folder
         if len(lambda_file_contents) == 0:
@@ -203,14 +204,19 @@ def load_metadata(props, exp_details):
     analysis = dxanalysis.DXAnalysis(job.analysis)
     props['aliases'].append('dnanexus:%s' % file.id)
 
-    if analysis is None:
-        print "Job doesn't have analysis"
+    try:
+        workflow_run = post_workflow_run(analysis)
+    except:
+        print "     Job doesn't have valid analysis"
         return False
 
-    workflow_run = post_workflow_run(analysis)
-
     if data['dx_project'] == "project-BKf7zV80z53QbqKQz18005vZ":
+        # another dirty hack for DNA ME pipeline
         analysis_step = get_analysis_step(props)
+        if props['file_format'] in ['bam', 'bigBed']:
+            step_run = post_step_run(job, workflow_run, analysis_step, True)
+        else:
+            step_run = post_step_run(job, workflow_run, analysis_step)
     else:
         # grabbing the name of the stage
         for stage in analysis.stages:
@@ -221,18 +227,22 @@ def load_metadata(props, exp_details):
         for stage in data['analysis_steps']:
             if data['analysis_steps'][stage]['dx_stage_name'] == stage_name:
                 analysis_step = stage
-    step_run = post_step_run(job, workflow_run, analysis_step)
+        step_run = post_step_run(job, workflow_run, analysis_step)
+
     if step_run is None:
         return False
 
     if 'metrics' in data['analysis_steps'][analysis_step]:
+        # For now this only handles parsing files.
+        # Other scenarios such as - property, documents should be implemented
         post_qc_metrics(analysis_step, step_run, exp_details, job.folder)
+
     if 'step_run' in props and props['step_run'] == step_run:
         return True
     else:
         patch_dict = {
             'step_run': step_run,
-            'aliases': props['aliases']
+            'aliases': list(set(props['aliases']))
         }
         status = patch_encode_object('file', patch_dict, props['@id'])
         if status is None:
@@ -304,11 +314,13 @@ def main():
                 for f in exp['original_files']:
                     f_json = get_encode_object(f)
                     if 'notes' in f_json:
+                        print " Processing file - %s" % f_json.get('accession')
                         status = load_metadata(f_json, exp_details)
                         if not status:
-                            print "Couldn't update the - %s" % \
-                                f_json['accession']
-                print "     Finished processing the experiment - %s" % \
+                            print "   Update failed - %s" % f_json['accession']
+                        else:
+                            print " ...Done"
+                print "Finished processing the experiment - %s" % \
                     exp['accession']
         elif args.dx_file:
             # Have to include the code to make the script work with
