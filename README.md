@@ -12,15 +12,15 @@ Step 2: Install or update dependencies
     $ pip install dxpy
 
 Step 3: Setup dx-tools and configure
-  
+
     Follow the tutorial here - https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK
-    
+
 Step 3: Checkout the repo
 
     $ git clone --recursive https://github.com/nikhilRP/data_provenance.git
 
 Step 4: Fill out authorization details and properties in "properties.json"
-    
+
     {
         "encode_server": "",
         "encode_authid": "",
@@ -46,3 +46,5 @@ Step 4: Fill out authorization details and properties in "properties.json"
             }
         }
     }
+
+Notes: Included "properties-dna-me.json" file as an example proerties file.
