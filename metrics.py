@@ -52,7 +52,8 @@ def patch_encode_object(collection, props, id):
 
 def post_workflow_run(analysis):
     path = '%s/dnanexus:%s' % (data['encode_server'], analysis.id)
-    response = requests.get(path, auth=(data['encode_authid'], data['encode_authpw']))
+    response = requests.get(path, auth=(data['encode_authid'],
+                                        data['encode_authpw']))
     if response.status_code == 200:
         return response.json()['@id']
     else:
@@ -79,7 +80,8 @@ def post_step_run(job, workflow_run, analysis_step):
     Post the step run to the specificed encode server
     """
     path = '%s/dnanexus:%s' % (data['encode_server'], job.id)
-    response = requests.get(path, auth=(data['encode_authid'], data['encode_authpw']))
+    response = requests.get(path, auth=(data['encode_authid'],
+                                        data['encode_authpw']))
     if response.status_code == 200:
         return response.json()['@id']
     else:
@@ -117,7 +119,8 @@ def get_analysis_step(props):
     elif props['file_format'] == "bam":
         analysis_step = "/analysis-steps/mott-trim-align-bismark-v-1-0/"
     elif props['file_format'] == "bed":
-        analysis_step = "/analysis-steps/methylation-quantification-bismark-v-1-0/"
+        analysis_step = \
+            "/analysis-steps/methylation-quantification-bismark-v-1-0/"
     return analysis_step
 
 
@@ -162,21 +165,26 @@ def post_qc_metrics(ana_step, step_run, exp_details, folder):
             if prop.startswith('lambda'):
                 for line in lambda_file_contents:
                     if line.startswith(prop[7:]):
-                        if response.json()['properties'][prop]['type'] == "number":
+                        if response.json()['properties'][prop]['type'] \
+                                == "number":
                             metrics[prop] = int(line.split('\t')[1])
                         else:
                             metrics[prop] = line.split('\t')[1]
             else:
                 for line in file_contents:
                     if line.startswith(prop):
-                        if response.json()['properties'][prop]['type'] == "number":
+                        if response.json()['properties'][prop]['type'] \
+                                == "number":
                             metrics[prop] = int(line.split('\t')[1])
                         else:
                             metrics[prop] = line.split('\t')[1]
     path = '%s/dnanexus:qc-%s' % (data['encode_server'], step_run)
-    response = requests.get(path, auth=(data['encode_authid'], data['encode_authpw']))
+    response = requests.get(path, auth=(data['encode_authid'],
+                                        data['encode_authpw']))
     if response.status_code == 200:
-        patch_encode_object('bismark_qc_metric', metrics, response.json()['@id'])
+        patch_encode_object('bismark_qc_metric',
+                            metrics,
+                            response.json()['@id'])
     else:
         post_encode_object('bismark_qc_metric', metrics)
 
@@ -291,14 +299,17 @@ def main():
                     'assay_term_id': exp['assay_term_id'],
                     'accession': exp['accession']
                 }
-                print "Started processing the experimet - %s" % exp['accession']
+                print "Started processing the experimet - %s" % \
+                    exp['accession']
                 for f in exp['original_files']:
                     f_json = get_encode_object(f)
                     if 'notes' in f_json:
                         status = load_metadata(f_json, exp_details)
                         if not status:
-                            print "Couldn't update the - %s" % f_json['accession']
-                print "     Finished processing the experiment - %s" % exp['accession']
+                            print "Couldn't update the - %s" % \
+                                f_json['accession']
+                print "     Finished processing the experiment - %s" % \
+                    exp['accession']
         elif args.dx_file:
             pass
 
