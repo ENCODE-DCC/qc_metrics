@@ -157,7 +157,7 @@ def post_qc_metrics(ana_step, step_run, exp_details, folder):
     for prop in response.json()['properties']:
         if prop not in ['@id', '@type', 'status', 'step_run', 'schema_version',
                         'assay_term_name', 'assay_term_id', 'applies_to',
-                        'status']:
+                        'status', 'aliases']:
             # once again hack for DNA me pipeline
             if prop.startswith('lambda'):
                 for line in lambda_file_contents:
@@ -176,7 +176,7 @@ def post_qc_metrics(ana_step, step_run, exp_details, folder):
     path = '%s/dnanexus:qc-%s' % (data['encode_server'], step_run)
     response = requests.get(path, auth=(data['encode_authid'], data['encode_authpw']))
     if response.status_code == 200:
-        patch_encode_object('bismark_qc_metric', metrics)
+        patch_encode_object('bismark_qc_metric', metrics, response.json()['@id'])
     else:
         post_encode_object('bismark_qc_metric', metrics)
 
