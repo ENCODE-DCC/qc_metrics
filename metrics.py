@@ -129,63 +129,63 @@ def post_qc_metrics(ana_step, step_run, exp_details, folder):
     Should load metrics from DNA Nexus stage to file
     TODO: Will have to extend this to other assays
     """
-    metrics = {
-        'step_run': step_run,
-        'assay_term_name': exp_details['assay_term_name'],
-        'assay_term_id': exp_details['assay_term_id'],
-        'aliases': ['dnanexus:qc-%s' % step_run]
-    }
-    schema = data['analysis_steps'][ana_step]['metrics']['encode_schema']
-    path = '%s/profiles/%s?format=json' % (data['encode_server'], schema)
-    response = requests.get(path, headers=HEADERS)
-    files = list(dxpy.bindings.search.find_data_objects(
-        folder=folder,
-        name=data['analysis_steps'][ana_step]['metrics']['file_extensions'],
-        name_mode="glob"))
-    file_contents = []
-    lambda_file_contents = []
-    for file in files:
-        file_json = dxfile.DXFile(file.get('id'))
-        if file_json.folder.endswith('lambda'):
-            lambda_file_contents = file_json.read().split('\n')
-        else:
-            file_contents = file_json.read().split('\n')
-
-    # Debug statements to know which files are posted and which aren't
-    if len(file_contents) == 0:
-        print "Couldn't load map report for the file - %s" % folder
-    if len(lambda_file_contents) == 0:
-        print "Couldn't load map report for the file - %s" % folder
-
-    for prop in response.json()['properties']:
-        if prop not in ['@id', '@type', 'status', 'step_run', 'schema_version',
-                        'assay_term_name', 'assay_term_id', 'applies_to',
-                        'status', 'aliases']:
-            # once again hack for DNA me pipeline
-            if prop.startswith('lambda'):
-                for line in lambda_file_contents:
-                    if line.startswith(prop[7:]):
-                        if response.json()['properties'][prop]['type'] \
-                                == "number":
-                            metrics[prop] = int(line.split('\t')[1])
-                        else:
-                            metrics[prop] = line.split('\t')[1]
-            else:
-                for line in file_contents:
-                    if line.startswith(prop):
-                        if response.json()['properties'][prop]['type'] \
-                                == "number":
-                            metrics[prop] = int(line.split('\t')[1])
-                        else:
-                            metrics[prop] = line.split('\t')[1]
     path = '%s/dnanexus:qc-%s' % (data['encode_server'], step_run)
     response = requests.get(path, auth=(data['encode_authid'],
                                         data['encode_authpw']))
     if response.status_code == 200:
-        patch_encode_object('bismark_qc_metric',
-                            metrics,
-                            response.json()['@id'])
+        return response.json()['@id']
     else:
+        metrics = {
+            'step_run': step_run,
+            'assay_term_name': exp_details['assay_term_name'],
+            'assay_term_id': exp_details['assay_term_id'],
+            'aliases': ['dnanexus:qc-%s' % step_run]
+        }
+        schema = data['analysis_steps'][ana_step]['metrics']['encode_schema']
+        path = '%s/profiles/%s?format=json' % (data['encode_server'], schema)
+        response = requests.get(path, headers=HEADERS)
+        files = list(dxpy.bindings.search.find_data_objects(
+            folder=folder,
+            name=data['analysis_steps'][ana_step]['metrics']
+            ['file_extensions'],
+            name_mode="glob"))
+        file_contents = []
+        lambda_file_contents = []
+        for file in files:
+            file_json = dxfile.DXFile(file.get('id'))
+            if file_json.folder.endswith('lambda'):
+                lambda_file_contents = file_json.read().split('\n')
+            else:
+                file_contents = file_json.read().split('\n')
+
+        # Debug statements to know which files are posted and which aren't
+        if len(file_contents) == 0:
+            print "Couldn't load map report for the file - %s" % folder
+        if len(lambda_file_contents) == 0:
+            print "Couldn't load map report for the file - %s" % folder
+
+        for prop in response.json()['properties']:
+            if prop not in ['@id', '@type', 'status', 'step_run',
+                            'schema_version', 'assay_term_name',
+                            'assay_term_id', 'applies_to',
+                            'status', 'aliases']:
+                # once again hack for DNA me pipeline
+                if prop.startswith('lambda'):
+                    for line in lambda_file_contents:
+                        if line.startswith(prop[7:]):
+                            if response.json()['properties'][prop]['type'] \
+                                    == "number":
+                                metrics[prop] = int(line.split('\t')[1])
+                            else:
+                                metrics[prop] = line.split('\t')[1]
+                else:
+                    for line in file_contents:
+                        if line.startswith(prop):
+                            if response.json()['properties'][prop]['type'] \
+                                    == "number":
+                                metrics[prop] = int(line.split('\t')[1])
+                            else:
+                                metrics[prop] = line.split('\t')[1]
         post_encode_object('bismark_qc_metric', metrics)
 
 
@@ -311,6 +311,8 @@ def main():
                 print "     Finished processing the experiment - %s" % \
                     exp['accession']
         elif args.dx_file:
+            # Have to include the code to make the script work with
+            # DNA Nexus analyis IDs
             pass
 
 
