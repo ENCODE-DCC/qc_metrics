@@ -57,5 +57,6 @@ Step 5: Run below command to start posting metrics to the server listed
 Notes: Included "properties-dna-me.json" file as an example proerties file.
 
 TODO::
+
     1. Extend the functionality for different assays. Not been tested on any other assay other than WGBS.
     2. Post and patch have to be implemented in a cleaner way
