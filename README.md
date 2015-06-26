@@ -47,4 +47,15 @@ Step 4: Fill out authorization details and properties in "properties.json"
         }
     }
 
+Step 5: Run below command to start posting metrics to the server listed
+    
+    python2.7 metrics.py --encode-url <search-URL>
+
+    eg:
+    python2.7 metrics.py --encode-url https://<server-name>/search/?type=experiment&assay_term_name=whole-genome%20shotgun%20bisulfite%20sequencing
+    
 Notes: Included "properties-dna-me.json" file as an example proerties file.
+
+TODO::
+    1. Extend the functionality for different assays. Not been tested on any other assay other than WGBS.
+    2. Post and patch have to be implemented in a cleaner way
