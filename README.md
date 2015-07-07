@@ -17,7 +17,7 @@ Step 3: Setup dx-tools and configure
 
 Step 3: Checkout the repo
 
-    $ git clone --recursive https://github.com/nikhilRP/data_provenance.git
+    $ git clone --recursive https://github.com/ENCODE-DCC/qc_metrics.git
 
 Step 4: Fill out authorization details and properties in "properties.json"
 
